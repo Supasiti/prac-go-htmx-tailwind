@@ -57,17 +57,13 @@ start: build
 	@echo "Starting hot reloading server..."
 	@$(GOAIR)
 
-.PHONY: gen-templ
-gen-templ: setup
+.PHONY: templ
+templ: setup
 	@echo "Generating files from Templ..."
 	@$(TEMPL) generate
-
+	
 .PHONY: css
 css:
 	@echo "Building tailwind css..."
 	@$(TAILWIND) -i css/input.css -o css/output.css --minify
 
-.PHONY: css-watch
-css-watch:
-	@echo "Watching build tailwind css..."
-	@$(TAILWIND) -i css/input.css -o css/output.css --watch

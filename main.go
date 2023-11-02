@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"log/slog"
 	"net/http"
@@ -17,27 +18,35 @@ var (
 )
 
 func main() {
-	handleSigTerms()
-
 	mux := router.NewRouter()
 
 	// For static files
 	mux.Handle("/css/output.css", http.FileServer(http.FS(css)))
 
-	err := http.ListenAndServe(":8080", mux)
-	if err != nil {
-		slog.Error("Unable to create server", err)
+	server := &http.Server{Addr: ":8080", Handler: mux}
+	handleSigTerms(server)
+
+	err := server.ListenAndServe()
+	if err != nil && err != http.ErrServerClosed {
+		slog.Error("ListenAndServe() error", err)
 		os.Exit(1)
 	}
 }
 
-func handleSigTerms() {
+// For gracefully shutdown server
+func handleSigTerms(server *http.Server) {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
 		<-c
 		slog.Info("received SIGTERM, exiting...")
+
+		err := server.Shutdown(context.Background())
+		if err != nil {
+			slog.Error("server.Shutdown() error", err)
+		}
+
 		os.Exit(1)
 	}()
 }
