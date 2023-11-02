@@ -1,26 +1,28 @@
 package main
 
 import (
-	"fmt"
+	"embed"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/supasiti/prac-go-htmx-tailwind/internal/router"
+)
+
+var (
+	//go:embed css/output.css
+	css embed.FS
 )
 
 func main() {
 	handleSigTerms()
 
-	mux := http.NewServeMux()
+	mux := router.NewRouter()
 
-	mux.HandleFunc("/hello", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, you've requested: %s\n", r.URL.Path)
-	})
-
-	mux.HandleFunc("/goodbye", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Goodbye, you've requested: %s\n", r.URL.Path)
-	})
+	// For static files
+	mux.Handle("/css/output.css", http.FileServer(http.FS(css)))
 
 	err := http.ListenAndServe(":8080", mux)
 	if err != nil {

@@ -1,5 +1,5 @@
 # Makefile for the project
-
+ROOT := $(shell pwd)
 GO := go
 GOBUILD := $(GO) build
 GOFILES := $(shell find . -name "*.go" -type f)
@@ -9,6 +9,7 @@ GOLANGCI_LINT_VERSIONED := $(GOLANGCI_LINT_FILE)-$(GOLANGCI_LINT_VERSION)
 GOLINT := $(GOLANGCI_LINT_VERSIONED) run
 GOAIR := bin/air
 TAILWIND := npx tailwindcss
+TEMPL := bin/templ
 
 # Go mod tidy
 .PHONY: tidy
@@ -27,8 +28,13 @@ $(GOAIR):
 	@mkdir -p bin
 	@curl -sSfL https://raw.githubusercontent.com/cosmtrek/air/master/install.sh | sh -s -- -b ./bin
 
+$(TEMPL):
+	@echo "Setting up Templ..."
+	@mkdir -p bin
+	@export GOBIN=${ROOT}/bin && $(GO) install github.com/a-h/templ/cmd/templ@latest 
+
 .PHONY: setup
-setup: $(GOLANGCI_LINT_VERSIONED) $(GOAIR) 
+setup: $(GOLANGCI_LINT_VERSIONED) $(GOAIR) $(TEMPL) 
 	@echo "Installing tools..."
 
 .PHONY: fmt
@@ -50,6 +56,11 @@ build:
 start: build
 	@echo "Starting hot reloading server..."
 	@$(GOAIR)
+
+.PHONY: gen-templ
+gen-templ: setup
+	@echo "Generating files from Templ..."
+	@$(TEMPL) generate
 
 .PHONY: css
 css:
