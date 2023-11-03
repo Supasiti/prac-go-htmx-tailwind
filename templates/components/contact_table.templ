@@ -61,10 +61,10 @@ templ ContactRow(contact *model.Contact) {
 templ ContactForm(contact *model.Contact) {
 	<tr>
 		@tableCell() {
-			{ contact.Name }
+			<input name="name" value={ contact.Name }/>
 		}
 		@tableCell() {
-			{ contact.Email }
+			<input name="email" value={ contact.Email }/>
 		}
 		@tableCell() {
 			<button
@@ -77,7 +77,15 @@ templ ContactForm(contact *model.Contact) {
 			</button>
 		}
 		@tableCell() {
-			Save
+			<button
+ 				type="button"
+ 				hx-patch={ fmt.Sprintf("/contact/%d", contact.ContactID) }
+ 				hx-include="closest tr"
+ 				hx-target="closest tr"
+ 				hx-swap="outerHTML"
+			>
+				Save
+			</button>
 		}
 	</tr>
 }

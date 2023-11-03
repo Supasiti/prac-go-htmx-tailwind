@@ -80,27 +80,35 @@ func NewContactHandler() *contactHandler {
 }
 
 func (h *contactHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	contactID, err := getContactIdFromURL(r)
+	contactID, err := parseContactID(r)
 	if err != nil {
 		http.Error(w, "Invalid contactID", http.StatusBadRequest)
 		return
 	}
-	slog.Info("GET", "contactID", contactID)
+	slog.Info("ServeHTTP", "contactID", contactID)
 
-	if r.Method == http.MethodGet {
-		h.GET(w, r, contactID)
-		return
-	}
-	http.NotFound(w, r)
-}
-
-func (h *contactHandler) GET(w http.ResponseWriter, r *http.Request, contactID int) {
 	contact, ok := contacts[contactID]
 	if !ok {
-		http.Error(w, "Invalid contactID", http.StatusBadRequest)
+		http.NotFound(w, r)
 		return
 	}
 
+	switch r.Method {
+
+	case http.MethodGet:
+		h.GET(w, r, contact)
+		return
+
+	case http.MethodPatch:
+		h.PATCH(w, r, contact)
+		return
+
+	default:
+		http.NotFound(w, r)
+	}
+}
+
+func (h *contactHandler) GET(w http.ResponseWriter, r *http.Request, contact *model.Contact) {
 	action := r.URL.Query().Get("action")
 	if action == "edit" {
 		components.ContactForm(contact).Render(r.Context(), w)
@@ -110,7 +118,21 @@ func (h *contactHandler) GET(w http.ResponseWriter, r *http.Request, contactID i
 	components.ContactRow(contact).Render(r.Context(), w)
 }
 
-func getContactIdFromURL(r *http.Request) (int, error) {
+func (h *contactHandler) PATCH(w http.ResponseWriter, r *http.Request, contact *model.Contact) {
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	// TODO validate form ?
+	contact.Name = r.Form.Get("name")
+	contact.Email = r.Form.Get("email")
+
+	components.ContactRow(contact).Render(r.Context(), w)
+}
+
+func parseContactID(r *http.Request) (int, error) {
 	parts := strings.Split(r.URL.Path, "/")
 	slog.Info("getContactIDFromURL", "parts", parts)
 
