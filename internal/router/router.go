@@ -30,6 +30,7 @@ var (
 			Email:     "j.ngo@email.com",
 		},
 	}
+	nextID = 4
 )
 
 func NewRouter() *http.ServeMux {
@@ -51,19 +52,54 @@ func NewContactsHandler() *contactsHandler {
 }
 
 func (h *contactsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodGet {
+	switch r.Method {
+
+	case http.MethodGet:
 		h.GET(w, r)
 		return
+
+	case http.MethodPost:
+		h.POST(w, r)
+		return
+
+	default:
+		http.NotFound(w, r)
 	}
-	http.NotFound(w, r)
 }
 
 func (h *contactsHandler) GET(w http.ResponseWriter, r *http.Request) {
-	t := components.ContactTable(ToArray(contacts))
+	t := components.ContactTable(toArray(contacts))
 	page.Page(t).Render(r.Context(), w)
 }
 
-func ToArray(cs map[int]*model.Contact) []*model.Contact {
+func (h *contactsHandler) POST(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+	name := r.Form.Get("name")
+	email := r.Form.Get("email")
+
+	if len(name) == 0 || len(email) == 0 {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+
+	newContact := &model.Contact{
+		ContactID: nextID,
+		Name:      name,
+		Email:     email,
+	}
+	contacts[nextID] = newContact
+
+	// update the next available id
+	nextID += 1
+	components.ContactRow(newContact).Render(r.Context(), w)
+	components.AddContactForm().Render(r.Context(), w)
+}
+
+func toArray(cs map[int]*model.Contact) []*model.Contact {
 	result := []*model.Contact{}
 
 	for _, c := range cs {
@@ -103,6 +139,10 @@ func (h *contactHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.PATCH(w, r, contact)
 		return
 
+	case http.MethodDelete:
+		h.DELETE(w, r, contact)
+		return
+
 	default:
 		http.NotFound(w, r)
 	}
@@ -130,6 +170,11 @@ func (h *contactHandler) PATCH(w http.ResponseWriter, r *http.Request, contact *
 	contact.Email = r.Form.Get("email")
 
 	components.ContactRow(contact).Render(r.Context(), w)
+}
+
+func (h *contactHandler) DELETE(w http.ResponseWriter, r *http.Request, contact *model.Contact) {
+	id := contact.ContactID
+	delete(contacts, id)
 }
 
 func parseContactID(r *http.Request) (int, error) {

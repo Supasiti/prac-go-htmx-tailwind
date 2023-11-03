@@ -6,6 +6,10 @@ import (
 	"github.com/supasiti/prac-go-htmx-tailwind/internal/model"
 )
 
+var (
+	inputCls = templ.SafeClass("bg-slate-100 pt-1 border-b-2 border-slate-400 outline-none")
+)
+
 templ ContactTable (contacts []*model.Contact) {
 	<table class="w-full md:w-3/4 xl:w-1/2">
 		<thead class="border-b-2 border-slate-400">
@@ -20,6 +24,7 @@ templ ContactTable (contacts []*model.Contact) {
 			for _, contact := range contacts {
 				@ContactRow(contact)
 			}
+			@AddContactForm()
 		</tbody>
 	</table>
 }
@@ -28,8 +33,8 @@ templ tableHeader(text string) {
 	<th class="text-left text-lg font-normal p-2">{ text }</th>
 }
 
-templ tableCell() {
-	<td class="text-left p-2">
+templ tableCell(classes ...string) {
+	<td class={ "text-left p-2", classes }>
 		{ children... }
 	</td>
 }
@@ -42,7 +47,7 @@ templ ContactRow(contact *model.Contact) {
 		@tableCell() {
 			{ contact.Email }
 		}
-		@tableCell() {
+		@tableCell("w-20 text-center") {
 			<button
  				type="button"
  				hx-get={ fmt.Sprintf("/contact/%d?action=edit", contact.ContactID) }
@@ -52,8 +57,15 @@ templ ContactRow(contact *model.Contact) {
 				Edit
 			</button>
 		}
-		@tableCell() {
-			Delete
+		@tableCell("w-20 text-center") {
+			<button
+ 				type="button"
+ 				hx-delete={ toContactPath(contact) }
+ 				hx-target="closest tr"
+ 				hx-swap="outerHTML"
+			>
+				Delete
+			</button>
 		}
 	</tr>
 }
@@ -61,25 +73,25 @@ templ ContactRow(contact *model.Contact) {
 templ ContactForm(contact *model.Contact) {
 	<tr>
 		@tableCell() {
-			<input name="name" value={ contact.Name }/>
+			<input class={ inputCls } name="name" value={ contact.Name }/>
 		}
 		@tableCell() {
-			<input name="email" value={ contact.Email }/>
+			<input class={ inputCls } name="email" value={ contact.Email }/>
 		}
-		@tableCell() {
+		@tableCell("w-20 text-center") {
 			<button
  				type="button"
- 				hx-get={ fmt.Sprintf("/contact/%d", contact.ContactID) }
+ 				hx-get={ toContactPath(contact) }
  				hx-target="closest tr"
  				hx-swap="outerHTML"
 			>
 				Cancel
 			</button>
 		}
-		@tableCell() {
+		@tableCell("w-20 text-center") {
 			<button
  				type="button"
- 				hx-patch={ fmt.Sprintf("/contact/%d", contact.ContactID) }
+ 				hx-patch={ toContactPath(contact) }
  				hx-include="closest tr"
  				hx-target="closest tr"
  				hx-swap="outerHTML"
@@ -88,4 +100,31 @@ templ ContactForm(contact *model.Contact) {
 			</button>
 		}
 	</tr>
+}
+
+templ AddContactForm() {
+	<tr>
+		@tableCell() {
+			<input class={ inputCls } name="name"/>
+		}
+		@tableCell() {
+			<input class={ inputCls } name="email"/>
+		}
+		@tableCell("w-20 text-center")
+		@tableCell("w-20 text-center") {
+			<button
+ 				type="button"
+ 				hx-post="/contact"
+ 				hx-include="closest tr"
+ 				hx-target="closest tr"
+ 				hx-swap="outerHTML"
+			>
+				Add
+			</button>
+		}
+	</tr>
+}
+
+func toContactPath(contact *model.Contact) string {
+	return fmt.Sprintf("/contact/%d", contact.ContactID)
 }
