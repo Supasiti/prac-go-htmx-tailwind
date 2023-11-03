@@ -1,0 +1,35 @@
+package page 
+
+templ Page(body templ.Component) {
+	<!DOCTYPE html>
+	<html lang="en">
+		@header("Address Book in GO+htmx")
+		@content("Address", body)
+	</html>
+}
+
+templ header(title string) {
+	<head>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<meta http-equiv="X-UA-Compatible" content="ie=edge"/>
+		<script src="https://unpkg.com/htmx.org@1.9.2"></script>
+		<link href="/assets/css/output.css" rel="stylesheet"/>
+		<title>{ title }</title>
+	</head>
+}
+
+templ content(title string, body templ.Component) {
+	<body>
+		<main class="bg-slate-100 min-h-screen flex items-center">
+			<div class="container mx-auto pt-8 px-2">
+				<header class="bg-slate-300 rounded-lg p-4">
+					<h1 class="text-3xl text-center uppercase">{ title }</h1>
+				</header>
+				<div class="p-2 lg:p-8 border-slate-300 border-2 rounded-lg mt-12 flex justify-center">
+					{! body }
+				</div>
+			</div>
+		</main>
+	</body>
+}

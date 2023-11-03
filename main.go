@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	//go:embed css/output.css
+	//go:embed assets/css/output.css
 	css embed.FS
 )
 
@@ -21,7 +21,7 @@ func main() {
 	mux := router.NewRouter()
 
 	// For static files
-	mux.Handle("/css/output.css", http.FileServer(http.FS(css)))
+	mux.Handle("/assets/css/output.css", http.FileServer(http.FS(css)))
 
 	server := &http.Server{Addr: ":8080", Handler: mux}
 	handleSigTerms(server)

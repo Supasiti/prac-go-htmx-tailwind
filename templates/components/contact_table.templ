@@ -1,0 +1,83 @@
+package components
+
+import (
+	"fmt"
+
+	"github.com/supasiti/prac-go-htmx-tailwind/internal/model"
+)
+
+templ ContactTable (contacts []*model.Contact) {
+	<table class="w-full md:w-3/4 xl:w-1/2">
+		<thead class="border-b-2 border-slate-400">
+			<tr>
+				@tableHeader("Name")
+				@tableHeader("Email")
+				@tableHeader("")
+				@tableHeader("")
+			</tr>
+		</thead>
+		<tbody class="divide-y-2 divide-slate-300">
+			for _, contact := range contacts {
+				@ContactRow(contact)
+			}
+		</tbody>
+	</table>
+}
+
+templ tableHeader(text string) {
+	<th class="text-left text-lg font-normal p-2">{ text }</th>
+}
+
+templ tableCell() {
+	<td class="text-left p-2">
+		{ children... }
+	</td>
+}
+
+templ ContactRow(contact *model.Contact) {
+	<tr>
+		@tableCell() {
+			{ contact.Name }
+		}
+		@tableCell() {
+			{ contact.Email }
+		}
+		@tableCell() {
+			<button
+ 				type="button"
+ 				hx-get={ fmt.Sprintf("/contact/%d?action=edit", contact.ContactID) }
+ 				hx-target="closest tr"
+ 				hx-swap="outerHTML"
+			>
+				Edit
+			</button>
+		}
+		@tableCell() {
+			Delete
+		}
+	</tr>
+}
+
+templ ContactForm(contact *model.Contact) {
+	<tr>
+		@tableCell() {
+			{ contact.Name }
+		}
+		@tableCell() {
+			{ contact.Email }
+		}
+		@tableCell() {
+			<button
+ 				type="button"
+ 				hx-get={ fmt.Sprintf("/contact/%d", contact.ContactID) }
+ 				hx-target="closest tr"
+ 				hx-swap="outerHTML"
+			>
+				Cancel
+			</button>
+		}
+		@tableCell() {
+			Save
+		}
+	</tr>
+}

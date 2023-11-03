@@ -65,5 +65,5 @@ templ: setup
 .PHONY: css
 css:
 	@echo "Building tailwind css..."
-	@$(TAILWIND) -i css/input.css -o css/output.css --minify
+	@$(TAILWIND) -i assets/css/input.css -o assets/css/output.css --minify
 
