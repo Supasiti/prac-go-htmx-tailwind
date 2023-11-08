@@ -48,7 +48,7 @@ lint: setup
 	@$(GOLINT)
 
 .PHONY: build
-build: 
+build: tidy templ css 
 	@echo "Building the application..."
 	@$(GOBUILD) -o ./app -v
 
@@ -63,7 +63,7 @@ templ: setup
 	@$(TEMPL) generate
 	
 .PHONY: css
-css:
+css: setup
 	@echo "Building tailwind css..."
 	@$(TAILWIND) -i assets/css/input.css -o assets/css/output.css --minify
 
