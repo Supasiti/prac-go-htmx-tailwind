@@ -1,7 +1,6 @@
 package router
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -48,52 +47,23 @@ func NewHandler() *handler {
 }
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
 	contactIDQuery := r.URL.Query().Get("contactID")
 	if len(contactIDQuery) > 0 {
 		h.serveOne(w, r, contactIDQuery)
-		// contactID, err := strconv.Atoi(contactIDQuery)
-		// if err != nil {
-		// 	http.Error(w, "Invalid contactID", http.StatusBadRequest)
-		// 	return
-		// }
-		// slog.Info("ServeHTTP", "contactID", contactID)
-		//
-		// contact, ok := contacts[contactID]
-		// if !ok {
-		// 	http.NotFound(w, r)
-		// 	return
-		// }
-		//
-		// switch r.Method {
-		//
-		// case http.MethodGet:
-		// 	h.GetOne(w, r, contact)
-		// 	return
-		//
-		// case http.MethodPatch:
-		// 	h.UpdateOne(w, r, contact)
-		// 	return
-		//
-		// case http.MethodDelete:
-		// 	h.DeleteOne(w, r, contact)
-		// 	return
-		//
-		// default:
-		// 	http.NotFound(w, r)
-		// }
-
+		return
 	}
 
 	// No contactID
 	switch r.Method {
 
 	case http.MethodGet:
-		h.GetContacts(w, r)
+		slog.Info("GET /contact")
+		h.GetAll(w, r)
 		return
 
 	case http.MethodPost:
-		h.CreateContact(w, r)
+		slog.Info("POST /contact")
+		h.CreateOne(w, r)
 		return
 
 	default:
@@ -101,21 +71,24 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *handler) GetContacts(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetAll(w http.ResponseWriter, r *http.Request) {
 	t := components.ContactTable(toArray(contacts))
 	page.Page(t).Render(r.Context(), w)
 }
 
-func (h *handler) CreateContact(w http.ResponseWriter, r *http.Request) {
+func (h *handler) CreateOne(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
+	slog.Info("h.CreateOne", "form data", r.Form)
+
 	name := r.Form.Get("name")
 	email := r.Form.Get("email")
 
 	if len(name) == 0 || len(email) == 0 {
+		slog.Error("h.CreateOne", "error", "empty name or email")
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
@@ -178,7 +151,6 @@ func (h *handler) serveOne(w http.ResponseWriter, r *http.Request, q string) {
 
 func (h *handler) GetOne(w http.ResponseWriter, r *http.Request, contact *model.Contact) {
 	action := r.URL.Query().Get("action")
-	fmt.Println(action)
 	if action == "edit" {
 		components.ContactForm(contact).Render(r.Context(), w)
 		return
