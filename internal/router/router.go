@@ -1,11 +1,10 @@
 package router
 
 import (
-	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/supasiti/prac-go-htmx-tailwind/internal/model"
 	"github.com/supasiti/prac-go-htmx-tailwind/templates/components"
@@ -36,30 +35,65 @@ var (
 func NewRouter() *http.ServeMux {
 	mux := http.NewServeMux()
 
-	csh := NewContactsHandler()
+	csh := NewHandler()
 	mux.Handle("/contact", csh)
-
-	ch := NewContactHandler()
-	mux.Handle("/contact/", ch)
 
 	return mux
 }
 
-type contactsHandler struct{}
+type handler struct{}
 
-func NewContactsHandler() *contactsHandler {
-	return &contactsHandler{}
+func NewHandler() *handler {
+	return &handler{}
 }
 
-func (h *contactsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	contactIDQuery := r.URL.Query().Get("contactID")
+	if len(contactIDQuery) > 0 {
+		h.serveOne(w, r, contactIDQuery)
+		// contactID, err := strconv.Atoi(contactIDQuery)
+		// if err != nil {
+		// 	http.Error(w, "Invalid contactID", http.StatusBadRequest)
+		// 	return
+		// }
+		// slog.Info("ServeHTTP", "contactID", contactID)
+		//
+		// contact, ok := contacts[contactID]
+		// if !ok {
+		// 	http.NotFound(w, r)
+		// 	return
+		// }
+		//
+		// switch r.Method {
+		//
+		// case http.MethodGet:
+		// 	h.GetOne(w, r, contact)
+		// 	return
+		//
+		// case http.MethodPatch:
+		// 	h.UpdateOne(w, r, contact)
+		// 	return
+		//
+		// case http.MethodDelete:
+		// 	h.DeleteOne(w, r, contact)
+		// 	return
+		//
+		// default:
+		// 	http.NotFound(w, r)
+		// }
+
+	}
+
+	// No contactID
 	switch r.Method {
 
 	case http.MethodGet:
-		h.GET(w, r)
+		h.GetContacts(w, r)
 		return
 
 	case http.MethodPost:
-		h.POST(w, r)
+		h.CreateContact(w, r)
 		return
 
 	default:
@@ -67,12 +101,12 @@ func (h *contactsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *contactsHandler) GET(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetContacts(w http.ResponseWriter, r *http.Request) {
 	t := components.ContactTable(toArray(contacts))
 	page.Page(t).Render(r.Context(), w)
 }
 
-func (h *contactsHandler) POST(w http.ResponseWriter, r *http.Request) {
+func (h *handler) CreateContact(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
@@ -109,14 +143,8 @@ func toArray(cs map[int]*model.Contact) []*model.Contact {
 	return result
 }
 
-type contactHandler struct{}
-
-func NewContactHandler() *contactHandler {
-	return &contactHandler{}
-}
-
-func (h *contactHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	contactID, err := parseContactID(r)
+func (h *handler) serveOne(w http.ResponseWriter, r *http.Request, q string) {
+	contactID, err := strconv.Atoi(q)
 	if err != nil {
 		http.Error(w, "Invalid contactID", http.StatusBadRequest)
 		return
@@ -132,15 +160,15 @@ func (h *contactHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 
 	case http.MethodGet:
-		h.GET(w, r, contact)
+		h.GetOne(w, r, contact)
 		return
 
 	case http.MethodPatch:
-		h.PATCH(w, r, contact)
+		h.UpdateOne(w, r, contact)
 		return
 
 	case http.MethodDelete:
-		h.DELETE(w, r, contact)
+		h.DeleteOne(w, r, contact)
 		return
 
 	default:
@@ -148,8 +176,9 @@ func (h *contactHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *contactHandler) GET(w http.ResponseWriter, r *http.Request, contact *model.Contact) {
+func (h *handler) GetOne(w http.ResponseWriter, r *http.Request, contact *model.Contact) {
 	action := r.URL.Query().Get("action")
+	fmt.Println(action)
 	if action == "edit" {
 		components.ContactForm(contact).Render(r.Context(), w)
 		return
@@ -158,7 +187,7 @@ func (h *contactHandler) GET(w http.ResponseWriter, r *http.Request, contact *mo
 	components.ContactRow(contact).Render(r.Context(), w)
 }
 
-func (h *contactHandler) PATCH(w http.ResponseWriter, r *http.Request, contact *model.Contact) {
+func (h *handler) UpdateOne(w http.ResponseWriter, r *http.Request, contact *model.Contact) {
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
@@ -172,21 +201,7 @@ func (h *contactHandler) PATCH(w http.ResponseWriter, r *http.Request, contact *
 	components.ContactRow(contact).Render(r.Context(), w)
 }
 
-func (h *contactHandler) DELETE(w http.ResponseWriter, r *http.Request, contact *model.Contact) {
+func (h *handler) DeleteOne(w http.ResponseWriter, r *http.Request, contact *model.Contact) {
 	id := contact.ContactID
 	delete(contacts, id)
-}
-
-func parseContactID(r *http.Request) (int, error) {
-	parts := strings.Split(r.URL.Path, "/")
-	slog.Info("getContactIDFromURL", "parts", parts)
-
-	// first entry is always an empty string
-	if len(parts) < 3 {
-		return 0, errors.New("missing id")
-	}
-
-	contactID := parts[2]
-	slog.Info("contactID", "id", contactID)
-	return strconv.Atoi(contactID)
 }

@@ -223,7 +223,7 @@ func ContactRow(contact *model.Contact) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(fmt.Sprintf("/contact/%d?action=edit", contact.ContactID)))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(fmt.Sprintf("/contact?contactID=%d&action=edit", contact.ContactID)))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -601,5 +601,5 @@ func AddContactForm() templ.Component {
 }
 
 func toContactPath(contact *model.Contact) string {
-	return fmt.Sprintf("/contact/%d", contact.ContactID)
+	return fmt.Sprintf("/contact?contactID=%d", contact.ContactID)
 }

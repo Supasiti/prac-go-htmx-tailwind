@@ -50,7 +50,7 @@ templ ContactRow(contact *model.Contact) {
 		@tableCell("w-20 text-center") {
 			<button
  				type="button"
- 				hx-get={ fmt.Sprintf("/contact/%d?action=edit", contact.ContactID) }
+ 				hx-get={ fmt.Sprintf("/contact?contactID=%d&action=edit", contact.ContactID) }
  				hx-target="closest tr"
  				hx-swap="outerHTML"
 			>
@@ -126,5 +126,5 @@ templ AddContactForm() {
 }
 
 func toContactPath(contact *model.Contact) string {
-	return fmt.Sprintf("/contact/%d", contact.ContactID)
+	return fmt.Sprintf("/contact?contactID=%d", contact.ContactID)
 }
