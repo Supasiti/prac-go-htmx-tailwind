@@ -122,7 +122,7 @@ func (h *handler) serveOne(w http.ResponseWriter, r *http.Request, q string) {
 		http.Error(w, "Invalid contactID", http.StatusBadRequest)
 		return
 	}
-	slog.Info("ServeHTTP", "contactID", contactID)
+	slog.Info("h.serveOne", "contactID", contactID)
 
 	contact, ok := contacts[contactID]
 	if !ok {
@@ -133,14 +133,17 @@ func (h *handler) serveOne(w http.ResponseWriter, r *http.Request, q string) {
 	switch r.Method {
 
 	case http.MethodGet:
+		slog.Info("GET /contact", "contactID", contactID)
 		h.GetOne(w, r, contact)
 		return
 
 	case http.MethodPatch:
+		slog.Info("PATCH /contact", "contactID", contactID)
 		h.UpdateOne(w, r, contact)
 		return
 
 	case http.MethodDelete:
+		slog.Info("DELETE /contact", "contactID", contactID)
 		h.DeleteOne(w, r, contact)
 		return
 
@@ -165,6 +168,7 @@ func (h *handler) UpdateOne(w http.ResponseWriter, r *http.Request, contact *mod
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
+	slog.Info("h.UpdateOne", "form data", r.Form)
 
 	// TODO validate form ?
 	contact.Name = r.Form.Get("name")
